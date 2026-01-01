@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SERVICE_UUID, CHAR_TEXT_UUID, connectCore2Glass, writeText } from '$lib';
 	import { onMount } from 'svelte';
+	import { flip } from 'svelte/animate';
 
 	// Svelte 5 でも従来スタイルで書いてよければ普通の let でOK
 	let isSupported = $state(false);
@@ -11,35 +12,41 @@
 	let charText: BluetoothRemoteGATTCharacteristic | null = null;
 
 	// スロット用の簡易 state
-	type Slot = { text: string; delayMs: number };
+	type Slot = { text: string; delayMs: number, flip: boolean };
 
 	const tmp: Slot[][] = [
 		[
 			{
 				text: '食事摂取量  >良い\n             普通\n             悪い',
-				delayMs: 2000
+				delayMs: 2000,
+				flip: false,
 			},
 			{
 				text: '食事摂取量   良い\n            >普通\n             悪い',
-				delayMs: 2000
+				delayMs: 2000,
+				flip: false,
 			},
 			{
 				text: '食事摂取量   良い\n             普通\n            >悪い',
-				delayMs: 3000
+				delayMs: 3000,
+				flip: false,
 			},
 			{
 				text: '食事摂取量   良い\n            >普通\n             悪い',
-				delayMs: 3000
+				delayMs: 3000,
+				flip: false,
 			},
 			{
 				text: '食事摂取量「普通」\nを記録しました',
-				delayMs: 20000
+				delayMs: 20000,
+				flip: false,
 			}
 		],
 		[
 			{
 				text: '名前：山田 花子\nヤマダ ハナコ\n介護度：5\n注記：入浴は要介助',
-				delayMs: 200000
+				delayMs: 200000,
+				flip: false,
 			}
 		]
 	];
@@ -47,7 +54,8 @@
 	let slots: Slot[] = $state([
 		{
 			text: '',
-			delayMs: 2000
+			delayMs: 2000,
+			flip: false,
 		}
 	]);
 	let currentIndex = $state(0);
@@ -110,11 +118,14 @@
 		}
 	}
 
-	function updateSlot(index: number, field: 'text' | 'delayMs', value: string) {
+	function updateSlot(index: number, field: 'text' | 'delayMs' | 'flip', value: string) {
 		const copy = [...slots];
 		if (!copy[index]) return;
 		if (field === 'text') {
 			copy[index] = { ...copy[index], text: value };
+		} else if (field === 'flip') {
+			console.log(value)
+			copy[index] = { ...copy[index], flip: value === 'on' }
 		} else {
 			const n = Number(value) || 1000;
 			copy[index] = { ...copy[index], delayMs: Math.max(100, n) };
@@ -123,7 +134,7 @@
 	}
 
 	function addSlot() {
-		slots = [...slots, { text: '', delayMs: 1000 }];
+		slots = [...slots, { text: '', delayMs: 1000, flip: false, }];
 	}
 
 	function removeSlot(index: number) {
@@ -228,7 +239,8 @@
 				slots = [
 					{
 						text: '',
-						delayMs: 2000
+						delayMs: 2000,
+						flip: false,
 					}
 				];
 			}}>クリア</button
@@ -244,6 +256,13 @@
 						（再生位置）
 					{/if}
 				</h3>
+				<div>
+					反転
+					<input
+						type="checkbox"
+						bind:checked={slot.flip}
+					/>
+				</div>
 				<label>
 					テキスト
 					<textarea
